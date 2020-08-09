@@ -1,10 +1,6 @@
 package com.urbandroid.recordforeground
 
 import android.Manifest
-import android.app.AlarmManager
-import android.app.PendingIntent
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -13,11 +9,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 const val TAG : String = "RecordForeground"
 
 const val NOTIFICATION_CHANNEL_FOREGROUND = "foreground"
+
+const val ACTION = "com.urbandroid.recordforeground.ACTION"
 
 class MainActivity : AppCompatActivity() {
 
@@ -27,17 +24,22 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(findViewById(R.id.toolbar))
 
         startLater.setOnClickListener {
-            val time = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(10)
-            Log.i(TAG, "Scheduling start ${Date(time)}")
-            val am = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            am.setExactAndAllowWhileIdle(AlarmManager.RTC, time, PendingIntent.getForegroundService(this, 0, Intent(this, RecordingService::class.java), PendingIntent.FLAG_UPDATE_CURRENT))
+            var duration = 10L
+            try {
+                duration = Integer.parseInt(minutesText.text.toString()).toLong()
+            } catch (e: Exception) {
+                Log.e(TAG, e.message, e)
+            }
 
-            Toast.makeText(this, "Foreground service will start in a minute", Toast.LENGTH_LONG).show()
+            RecordingService.scheduleStart(this, duration)
+
+            Log.i(TAG , "Foreground service will start at ${Date(System.currentTimeMillis() + duration)}")
+            Toast.makeText(this, "Foreground service will start at ${Date(System.currentTimeMillis() + duration)}", Toast.LENGTH_LONG).show()
             finish()
         }
 
         startNow.setOnClickListener {
-            startForegroundService(Intent(this, RecordingService::class.java))
+            RecordingService.startService(this)
         }
 
         requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 0)
@@ -58,4 +60,10 @@ class MainActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.i(TAG, "Activity onDestroy()")
+    }
+
 }

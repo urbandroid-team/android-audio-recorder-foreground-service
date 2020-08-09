@@ -28,8 +28,13 @@
         </activity>
 
         <service
-            android:foregroundServiceType="microphone"
             android:name=".RecordingService"/>
+        
+        <receiver android:name=".RecordingReceiver">
+            <intent-filter>
+                <action android:name="com.urbandroid.recordforeground.ACTION"/>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
